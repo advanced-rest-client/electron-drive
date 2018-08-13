@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <style>
+  label {
+    display: block;
+  }
+  input {
+    display: block;
+    width: 100%;
+    margin-bottom: 12px;
+  }
+  </style>
+</head>
+<body>
+  <h1>Drive API demo</h1>
+  <fieldset>
+    <legend>File creation</legend>
+    <label for="content">File content</label>
+    <input type="text" name="fileContent" value="{&quot;test&quot;:&quot;value&quot;}" id="content">
+    <button id="create">Create new test file</button>
+  </fieldset>
+  <fieldset>
+    <legend>File update</legend>
+    <label for="fileId">Update file id</label>
+    <input type="text" name="fileId" value="" id="fileId">
+    <label for="updateContent">Update file content</label>
+    <input type="text" name="updateContent" value="{&quot;other&quot;:&quot;value&quot;}" id="updateContent">
+    <button id="update">Update test file</button>
+  </fieldset>
+
+  <script>
+  const {ipcRenderer} = require('electron');
+  class DriveApiDemo {
+    constructor() {
+      this.create = this.create.bind(this);
+      this.update = this.update.bind(this);
+      this._onResult = this._onResult.bind(this);
+      this._onResultError = this._onResultError.bind(this);
+      this.lastRequestId = 0;
+      this._requests = {};
+      this.oauthConfig = {
+        type: 'implicit',
+        clientId: '1076318174169-u4a5d3j2v0tbie1jnjgsluqk1ti7ged3.apps.googleusercontent.com',
+        authorizationUri: 'https://accounts.google.com/o/oauth2/v2/auth',
+        redirectUri: 'https://auth.advancedrestclient.com/oauth2',
+        scopes: [
+          'https://www.googleapis.com/auth/drive.file'
+        ]
+      };
+    }
+
+    initialize() {
+      document.getElementById('create').addEventListener('click', this.create);
+      document.getElementById('update').addEventListener('click', this.update);
+      ipcRenderer.on('google-drive-data-save-result', this._onResult);
+      ipcRenderer.on('google-drive-data-save-error', this._onResultError);
+    }
+
+    update() {
+      const id = (++this.lastRequestId);
+      const body = document.getElementById('updateContent').value;
+      const fileId = document.getElementById('fileId').value;
+      ipcRenderer.send('google-drive-data-save', id, {
+        meta: {
+          name: 'electron-drive-demo-file.json',
+          description: 'Electron drive export class test',
+        },
+        body,
+        id: fileId,
+        auth: this.oauthConfig
+      });
+    }
+
+    create() {
+      const id = (++this.lastRequestId);
+      const body = document.getElementById('content').value;
+      ipcRenderer.send('google-drive-data-save', id, {
+        meta: {
+          name: 'electron-drive-demo-file.json',
+          description: 'Electron drive export class test',
+        },
+        body,
+        auth: this.oauthConfig
+      });
+    }
+
+    _onResult(e, requestId, result) {
+      const id = result.id;
+      document.getElementById('fileId').value = id;
+      console.log(result);
+    }
+
+    _onResultError(e, requestId, cause) {
+      console.log('Error', cause);
+    }
+  }
+  const instance = new DriveApiDemo();
+  instance.initialize();
+  </script>
+</body>
+</html>
