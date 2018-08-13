@@ -1,1 +1,1 @@
-module.exports.ArcElectronDrive = require('./arc-electron-drive');
+module.exports.ArcElectronDrive = require('./arc-electron-drive').ArcElectronDrive;
