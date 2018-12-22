@@ -12,8 +12,14 @@
     "electron",
     "ARC"
   ],
-  "author": "Pawel Psztyc",
+  "author": {
+    "name": "Pawel Psztyc",
+    "email": "arc@mulesoft.com"
+  },
   "license": "Apache-2.0",
+  "repository": {
+    "url": "https://github.com/advanced-rest-client/electron-drive"
+  },
   "dependencies": {
     "@advanced-rest-client/electron-oauth2": "1.0.0-rc4",
     "electron-log": "^2.2.17"
