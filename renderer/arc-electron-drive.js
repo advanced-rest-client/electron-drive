@@ -52,14 +52,32 @@ class ArcElectronDrive {
   _dataSaveHandler(e) {
     e.preventDefault();
     const id = (++this._index);
-    const content = e.detail.content;
-    const type = e.detail.contentType;
-    const fileName = e.detail.file;
+    let {content, file, options} = e.detail;
+    if (!options) {
+      options = {};
+    }
+    const meta = {
+      name: file
+    };
+    if (options.parents && options.parents instanceof Array) {
+      const parents = [];
+      options.parents.forEach((item) => {
+        if (!item) {
+          return;
+        }
+        if (typeof item === 'string' && item.toLowercase() !== 'my drive') {
+          parents.push(item);
+        } else if (typeof item.name === 'string' && item.name.toLowercase() !== 'my drive') {
+          parents.push(item);
+        }
+      });
+      if (parents.length) {
+        meta.parents = parents;
+      }
+    }
     ipc.send('google-drive-data-save', id, {
-      meta: {
-        name: fileName
-      },
-      type,
+      meta,
+      type: options.contentType,
       body: content
     });
     e.detail.result = new Promise((resolve, reject) => {
