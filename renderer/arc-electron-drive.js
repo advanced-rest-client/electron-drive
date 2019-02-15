@@ -6,8 +6,9 @@ const {ipcRenderer: ipc} = require('electron');
 class ArcElectronDrive {
   constructor() {
     this._dataSaveHandler = this._dataSaveHandler.bind(this);
-    this._dataInsertResult = this._dataInsertResult.bind(this);
-    this._dataInsertError = this._dataInsertError.bind(this);
+    this._mainResultHandler = this._mainResultHandler.bind(this);
+    this._mainErrorHandler = this._mainErrorHandler.bind(this);
+    this._listAppFoldersHandler = this._listAppFoldersHandler.bind(this);
     /**
      * Map of pending promises. Keys are request IDs.
      */
@@ -22,16 +23,18 @@ class ArcElectronDrive {
    */
   listen() {
     window.addEventListener('google-drive-data-save', this._dataSaveHandler);
-    ipc.on('google-drive-data-save-result', this._dataInsertResult);
-    ipc.on('google-drive-data-save-error', this._dataInsertError);
+    window.addEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    ipc.on('google-drive-operation-result', this._mainResultHandler);
+    ipc.on('google-drive-operation-error', this._mainErrorHandler);
   }
   /**
    * Stops listening to the web and ipc events.
    */
   unlisten() {
     window.removeEventListener('google-drive-data-save', this._dataSaveHandler);
-    ipc.removeListener('google-drive-data-save-result', this._dataInsertResult);
-    ipc.removeListener('google-drive-data-save-error', this._dataInsertError);
+    window.removeEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    ipc.removeListener('google-drive-operation-result', this._mainResultHandler);
+    ipc.removeListener('google-drive-operation-error', this._mainErrorHandler);
   }
   /**
    * Adds new promise to the list of pending promises.
@@ -65,9 +68,16 @@ class ArcElectronDrive {
         if (!item) {
           return;
         }
-        if (typeof item === 'string' && item.toLowercase() !== 'my drive') {
+        if (typeof item === 'string') {
+          if (item.toLowerCase() === 'my drive') {
+            item = {id: 'root', name: item};
+          }
           parents.push(item);
-        } else if (typeof item.name === 'string' && item.name.toLowercase() !== 'my drive') {
+        } else if (typeof item.name === 'string') {
+          if (item.name.toLowerCase() === 'my drive') {
+            item = Object.assign({}, item);
+            item.id = 'root';
+          }
           parents.push(item);
         }
       });
@@ -85,12 +95,25 @@ class ArcElectronDrive {
     });
   }
   /**
-   * Handler for ipc `google-drive-data-save-result` event
+   * Handler for `google-drive-list-app-folders` event.
+   * Requests to get Drive folders list created by this application.
+   * @param {CustomEvent} e
+   */
+  _listAppFoldersHandler(e) {
+    e.preventDefault();
+    const id = (++this._index);
+    ipc.send('google-drive-list-app-folders', id, {interactive: false});
+    e.detail.result = new Promise((resolve, reject) => {
+      this._addPromise(id, resolve, reject);
+    });
+  }
+  /**
+   * Handler for ipc `google-drive-operation-result` event
    * @param {Event} e
    * @param {String} id
    * @param {Object} result
    */
-  _dataInsertResult(e, id, result) {
+  _mainResultHandler(e, id, result) {
     const promise = this._promises[id];
     if (!promise) {
       return;
@@ -99,12 +122,12 @@ class ArcElectronDrive {
     promise.resolve(result);
   }
   /**
-   * Handler for ipc `google-drive-data-save-error` event
+   * Handler for ipc `google-drive-operation-error` event
    * @param {Event} e
    * @param {String} id
    * @param {Object} cause
    */
-  _dataInsertError(e, id, cause) {
+  _mainErrorHandler(e, id, cause) {
     const promise = this._promises[id];
     if (!promise) {
       return;
