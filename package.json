@@ -1,6 +1,6 @@
 {
   "name": "@advanced-rest-client/electron-drive",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "A class for Electron that specializes in Google Drive data import / export",
   "main": "index.js",
   "scripts": {
