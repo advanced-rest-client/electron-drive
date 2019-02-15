@@ -2,32 +2,9 @@ const {app, BrowserWindow} = require('electron');
 const path = require('path');
 const {DriveExport} = require('../');
 let mainWindow = null;
-let drive = new DriveExport(DriveExport.arcDefaults);
-
-// Make this app a single instance app.
-//
-// The main window will be restored and focused instead of a second window
-// opened when a person attempts to launch a second instance.
-//
-// Returns true if the current version of the app should quit instead of
-// launching.
-function makeSingleInstance() {
-  return app.makeSingleInstance(() => {
-    if (mainWindow) {
-      if (mainWindow.isMinimized()) {
-        mainWindow.restore();
-      }
-      mainWindow.focus();
-    }
-  });
-}
+const drive = new DriveExport(DriveExport.arcDefaults);
 
 function initialize() {
-  const shouldQuit = makeSingleInstance();
-  if (shouldQuit) {
-    return app.quit();
-  }
-
   function createWindow() {
     const windowOptions = {
       width: 1080,
@@ -47,6 +24,7 @@ function initialize() {
   app.on('ready', () => {
     createWindow();
     drive.listen();
+    console.log('Listening for Drive events');
   });
 
   app.on('window-all-closed', () => {

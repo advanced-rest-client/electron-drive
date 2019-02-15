@@ -19,6 +19,7 @@
     <legend>File creation</legend>
     <label for="content">File content</label>
     <input type="text" name="fileContent" value="{&quot;test&quot;:&quot;value&quot;}" id="content">
+    <input type="text" name="fileParents" value="testFolder1,test folder 2" id="parents">
     <button id="create">Create new test file</button>
   </fieldset>
   <fieldset>
@@ -76,10 +77,17 @@
     create() {
       const id = (++this.lastRequestId);
       const body = document.getElementById('content').value;
+      const fileParents = document.getElementById('parents').value;
+      const parents = [];
+      fileParents.split(',').forEach((item) => {
+        item = item.trim();
+        parents.push(item);
+      });
       ipcRenderer.send('google-drive-data-save', id, {
         meta: {
           name: 'electron-drive-demo-file.json',
           description: 'Electron drive export class test',
+          parents
         },
         body,
         auth: this.oauthConfig
