@@ -9,6 +9,7 @@ class ArcElectronDrive {
     this._mainResultHandler = this._mainResultHandler.bind(this);
     this._mainErrorHandler = this._mainErrorHandler.bind(this);
     this._listAppFoldersHandler = this._listAppFoldersHandler.bind(this);
+    this._getFileHandler = this._getFileHandler.bind(this);
     /**
      * Map of pending promises. Keys are request IDs.
      */
@@ -24,6 +25,7 @@ class ArcElectronDrive {
   listen() {
     window.addEventListener('google-drive-data-save', this._dataSaveHandler);
     window.addEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    window.addEventListener('google-drive-get-file', this._getFileHandler);
     ipc.on('google-drive-operation-result', this._mainResultHandler);
     ipc.on('google-drive-operation-error', this._mainErrorHandler);
   }
@@ -33,6 +35,7 @@ class ArcElectronDrive {
   unlisten() {
     window.removeEventListener('google-drive-data-save', this._dataSaveHandler);
     window.removeEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    window.removeEventListener('google-drive-get-file', this._getFileHandler);
     ipc.removeListener('google-drive-operation-result', this._mainResultHandler);
     ipc.removeListener('google-drive-operation-error', this._mainErrorHandler);
   }
@@ -134,6 +137,32 @@ class ArcElectronDrive {
     }
     delete this._promises[id];
     promise.reject(cause);
+  }
+  /**
+   * Downloads file from Google Drive by its ID.
+   * @param {String} fileId File ID
+   * @return {Promise} Promise resolved to file content.
+   */
+  getFile(fileId) {
+    const id = (++this._index);
+    ipc.send('google-drive-get-file', id, fileId);
+    return new Promise((resolve, reject) => {
+      this._addPromise(id, resolve, reject);
+    });
+  }
+  /**
+   * Handler for `google-drive-get-file` custom event. Asks to download a file
+   * from Google Drive.
+   * @param {CustomEvent} e
+   */
+  _getFileHandler(e) {
+    e.preventDefault();
+    const {id} = e.detail;
+    if (!id) {
+      e.detail.result = Promise.reject('The "id" detail property is missing.');
+    } else {
+      e.detail.result = this.getFile(e.detail.id);
+    }
   }
 }
 module.exports.ArcElectronDrive = ArcElectronDrive;
