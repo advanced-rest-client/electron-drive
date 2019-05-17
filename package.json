@@ -21,11 +21,11 @@
     "url": "https://github.com/advanced-rest-client/electron-drive"
   },
   "dependencies": {
-    "@advanced-rest-client/electron-oauth2": "1.0.0"
+    "@advanced-rest-client/electron-oauth2": "^1.0.4"
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "electron": "^4.0.2",
+    "electron": "^4.2.2",
     "electron-mocha": "^6.0.4",
     "mocha": "^4.1.0"
   }
