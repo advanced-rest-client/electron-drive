@@ -1,1 +1,2 @@
-module.exports.DriveExport = require('./lib/drive-export').DriveExport;
+require = require('esm')(module);
+module.exports = require('./main.js');

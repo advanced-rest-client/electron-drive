@@ -1,9 +1,12 @@
-const {ipcRenderer: ipc} = require('electron');
+const { ipcRenderer: ipc } = require('electron');
 /**
  * A class to be used in the renderer process that listens for drive
  * events and communicates with drive instance in the main process.
  */
 class ArcElectronDrive {
+  /**
+   * @constructor
+   */
   constructor() {
     this._dataSaveHandler = this._dataSaveHandler.bind(this);
     this._mainResultHandler = this._mainResultHandler.bind(this);
@@ -24,7 +27,8 @@ class ArcElectronDrive {
    */
   listen() {
     window.addEventListener('google-drive-data-save', this._dataSaveHandler);
-    window.addEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    window.addEventListener('google-drive-list-app-folders',
+        this._listAppFoldersHandler);
     window.addEventListener('google-drive-get-file', this._getFileHandler);
     ipc.on('google-drive-operation-result', this._mainResultHandler);
     ipc.on('google-drive-operation-error', this._mainErrorHandler);
@@ -34,9 +38,11 @@ class ArcElectronDrive {
    */
   unlisten() {
     window.removeEventListener('google-drive-data-save', this._dataSaveHandler);
-    window.removeEventListener('google-drive-list-app-folders', this._listAppFoldersHandler);
+    window.removeEventListener('google-drive-list-app-folders',
+        this._listAppFoldersHandler);
     window.removeEventListener('google-drive-get-file', this._getFileHandler);
-    ipc.removeListener('google-drive-operation-result', this._mainResultHandler);
+    ipc.removeListener('google-drive-operation-result',
+        this._mainResultHandler);
     ipc.removeListener('google-drive-operation-error', this._mainErrorHandler);
   }
   /**
@@ -48,7 +54,7 @@ class ArcElectronDrive {
   _addPromise(id, resolve, reject) {
     this._promises[id] = {
       resolve: resolve,
-      reject: reject
+      reject: reject,
     };
   }
   /**
@@ -58,12 +64,12 @@ class ArcElectronDrive {
   _dataSaveHandler(e) {
     e.preventDefault();
     const id = (++this._index);
-    let {content, file, options} = e.detail;
+    let { content, file, options } = e.detail;
     if (!options) {
       options = {};
     }
     const meta = {
-      name: file
+      name: file,
     };
     if (options.parents && options.parents instanceof Array) {
       const parents = [];
@@ -73,7 +79,7 @@ class ArcElectronDrive {
         }
         if (typeof item === 'string') {
           if (item.toLowerCase() === 'my drive') {
-            item = {id: 'root', name: item};
+            item = { id: 'root', name: item };
           }
           parents.push(item);
         } else if (typeof item.name === 'string') {
@@ -91,7 +97,7 @@ class ArcElectronDrive {
     ipc.send('google-drive-data-save', id, {
       meta,
       type: options.contentType,
-      body: content
+      body: content,
     });
     e.detail.result = new Promise((resolve, reject) => {
       this._addPromise(id, resolve, reject);
@@ -105,7 +111,7 @@ class ArcElectronDrive {
   _listAppFoldersHandler(e) {
     e.preventDefault();
     const id = (++this._index);
-    ipc.send('google-drive-list-app-folders', id, {interactive: false});
+    ipc.send('google-drive-list-app-folders', id, { interactive: false });
     e.detail.result = new Promise((resolve, reject) => {
       this._addPromise(id, resolve, reject);
     });
@@ -157,9 +163,10 @@ class ArcElectronDrive {
    */
   _getFileHandler(e) {
     e.preventDefault();
-    const {id} = e.detail;
+    const { id } = e.detail;
     if (!id) {
-      e.detail.result = Promise.reject('The "id" detail property is missing.');
+      e.detail.result = Promise.reject(
+          new Error('The "id" detail property is missing.'));
     } else {
       e.detail.result = this.getFile(e.detail.id);
     }

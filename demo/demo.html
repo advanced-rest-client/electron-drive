@@ -55,8 +55,8 @@
     initialize() {
       document.getElementById('create').addEventListener('click', this.create);
       document.getElementById('update').addEventListener('click', this.update);
-      ipcRenderer.on('google-drive-data-save-result', this._onResult);
-      ipcRenderer.on('google-drive-data-save-error', this._onResultError);
+      ipcRenderer.on('google-drive-operation-result', this._onResult);
+      ipcRenderer.on('google-drive-operation-error', this._onResultError);
     }
 
     update() {
@@ -95,6 +95,7 @@
     }
 
     _onResult(e, requestId, result) {
+      console.log(e, requestId, result);
       const id = result.id;
       document.getElementById('fileId').value = id;
       console.log(result);
